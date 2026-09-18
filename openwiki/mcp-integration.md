@@ -1,10 +1,11 @@
 ---
-type: "Reference"
-title: "Bearer token"
-openwiki_generated: true
+type: "Integration"
+title: "Model Context Protocol Integration"
+description: "MCPAdapter discovers and converts MCP tools to LangChain StructuredTools via FastMCP, handling async invocation, mid-call elicitation via LangGraph interrupts, and tool errors."
+tags: ["MCP", "FastMCP", "LangChain", "tools", "adapter", "agent"]
 verified:
   - by: openwiki/0.5.0
-    at: 2026-09-03T15:18:34.589Z
+    at: 2026-09-18T08:26:04.519Z
 sources:
   - id: openwiki-source-6d1e3478d5b63988ee177552
     resource: repo://libs/langchain_v1/examples/mcp/auth_bearer.py
@@ -30,9 +31,8 @@ sources:
     resource: repo://libs/langchain_v1/langchain/mcp/elicitation.py
   - id: openwiki-source-4715c337e9b93b9d00846133
     resource: repo://libs/langchain_v1/langchain/mcp/tools.py
-generated: { by: "openwiki/0.5.0", at: "2026-09-03T15:18:34.589Z" }
+generated: { by: "openwiki/0.5.0", at: "2026-09-18T08:26:04.519Z" }
 ---
-
 
 ## Overview
 
@@ -350,95 +350,3 @@ uv sync --extra mcp --extra anthropic
 export ANTHROPIC_API_KEY=...
 uv run examples/mcp/transports.py
 ```
-
-## Integration Points
-
-### `create_agent`
-
-Tools from `MCPAdapter.list_tools()` pass directly to `create_agent()`, which routes tool calls through the agent's model and executor. Tools remain callable after the adapter context exits because they hold a reference to the underlying client.
-
-### LangGraph Checkpointer
-
-Elicitation-driven interrupts require a checkpointer so the run can pause and resume:
-
-```python
-from langgraph.checkpoint.memory import InMemorySaver
-
-agent = create_agent(
-    "anthropic:claude-sonnet-5",
-    tools,
-    checkpointer=InMemorySaver(),
-)
-config = {"configurable": {"thread_id": "user-1"}}
-paused = await agent.ainvoke({"messages": [...]}, config)
-# Human answers interrupt; resume with command
-resumed = await agent.ainvoke(Command(resume={...}), config)
-```
-
-### Tool Middleware
-
-Agents can apply middleware to gate or log tool calls. MCP tool metadata (e.g., `destructiveHint`) integrates with `HumanInTheLoopMiddleware`:
-
-```python
-from langchain.agents.middleware import HumanInTheLoopMiddleware
-
-interrupt_on = {
-    tool.name: InterruptOnConfig(...)
-    for tool in tools
-    if _is_destructive(tool)
-}
-agent = create_agent(..., middleware=[HumanInTheLoopMiddleware(interrupt_on=interrupt_on)])
-```
-
-## Configuration and Operations
-
-### Response Cache
-
-FastMCP caches tool lists and supports per-principal isolation. The adapter's `cache_mode` parameter controls cache use:
-
-- `"use"` (default) — serve from cache if fresh
-- `"refresh"` — refresh from server, repopulate cache
-- `"bypass"` — skip cache entirely
-
-```python
-tools = await adapter.list_tools(cache_mode="refresh")
-```
-
-For long-lived adapters, configure the cache on the client to persist across runs:
-
-```python
-cache = CacheConfig(
-    store=InMemoryResponseCacheStore(),
-    target_id="user-id",
-    partition="user-partition"
-)
-client = Client(url, cache=cache)
-tools = await MCPAdapter(client).list_tools(cache_mode="use")
-```
-
-### Logging and Observability
-
-`MCPAdapter` and `as_langchain_tool()` are transparent to LangChain's logging and observability hooks. Tool calls are logged as `ToolMessage` events in the agent's message history. Elicitation interrupts and responses are visible in the run's state transitions.
-
-## Invariants and Failure Semantics
-
-- **Tool availability**: Once `list_tools()` completes, tools remain callable even after the adapter context exits (they hold the client)
-- **Elicitation re-run**: When a tool is resumed with an answer, it is called again from the start. A server that works first and asks after repeats that work once per round
-- **Error propagation**: Transport errors propagate as exceptions; MCP tool errors (isError=True) become model-visible `ToolMessage` errors
-- **Client reuse**: Clients are reentrant; a tool can open its client even if a connection is already held elsewhere
-- **Pre-built client cloning**: If a caller passes a client with an existing elicitation handler, it is cloned so the caller's object is never mutated
-- **Group naming**: Tools from a `ClientGroup` are prefixed by config key; the router resolves each call to the correct member
-- **No concurrent elicitation**: Elicitation answers are driven sequentially, one `interrupt()` per round, so LangGraph can match resume values by order
-
-## Extension Points
-
-- **Custom transport**: Pass any `fastmcp.ClientTransport` to support non-standard protocols
-- **Custom auth**: Implement `httpx2.Auth` for authentication schemes beyond bearer token and OAuth
-- **Custom metadata handler**: Subclass `StructuredTool` to customize how MCP metadata is exposed on the LangChain tool
-- **Custom error handler**: Override `_handle_mcp_tool_error()` or provide your own `handle_tool_error` to the tool
-- **Custom interruption**: Provide a pre-built client with your own `elicitation_handler` to override the interrupt-driven default
-
-## Related Pages
-
-- **[tools.md](/openwiki/tools.md)** — LangChain tool abstractions, `BaseTool`, `StructuredTool`
-- **[agent-execution.md](/openwiki/agent-execution.md)** — agent orchestration, `create_agent`, tool routing

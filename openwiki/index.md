@@ -13,7 +13,7 @@ okf_version: "0.2"
 - [Dict syntax creates a RunnableParallel](composability.md)
 - [Development Commands and Local Setup](dev-commands.md) - Quick reference for uv, make, lint, test, and type-checking commands in the LangChain monorepo, including environment setup, pre-commit hooks, and testing workflows.
 - [Integration Testing: Live API Tests and VCR Cassettes](integration-tests.md) - How to write integration tests that call real model APIs with VCR cassette recording for CI compatibility, including environment setup, cassette management, and parameterization patterns.
-- [Bearer token](mcp-integration.md)
+- [Model Context Protocol Integration](mcp-integration.md) - MCPAdapter discovers and converts MCP tools to LangChain StructuredTools via FastMCP, handling async invocation, mid-call elicitation via LangGraph interrupts, and tool errors.
 - [Message Types and Content Representation](messages.md) - Document the message abstraction, standardized content blocks for multimodal LLM I/O, message hierarchy, and provider-specific block translators.
 - [Agent Middleware: Composable Request/Response Processing](middleware.md) - Document the middleware system for agents, including lifecycle hooks, HITL approval, error handling, retry logic, and middleware composition patterns for intercepting and modifying agent behavior.
 - [Chat Model Initialization with init_chat_model](model-initialization.md) - Factory function for instantiating chat models from provider strings with unified configuration and runtime model switching.

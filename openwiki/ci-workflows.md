@@ -2,9 +2,6 @@
 type: "Reference"
 title: "CI/CD Workflows: GitHub Actions and Release Process"
 openwiki_generated: true
-verified:
-  - by: openwiki/0.5.0
-    at: 2026-09-03T15:18:34.589Z
 sources:
   - id: openwiki-source-34e57b5a3a0c875639ab72a7
     resource: repo://.github/scripts/check_diff.py
@@ -28,7 +25,10 @@ sources:
     resource: repo://.github/workflows/openwiki-update.yml
   - id: openwiki-source-f8781d847f6481a966a44a68
     resource: repo://.github/workflows/pr_labeler.yml
-generated: { by: "openwiki/0.5.0", at: "2026-09-03T15:18:34.589Z" }
+generated: { by: "openwiki/0.5.0", at: "2026-09-18T08:26:04.519Z" }
+verified:
+  - by: openwiki/0.5.0
+    at: 2026-09-18T08:26:04.519Z
 ---
 
 
@@ -224,7 +224,7 @@ Scheduled daily (1 PM UTC) with manual dispatch override capability.
 - Runs per-package `make integration_tests` with all live API credentials injected
 - Uses concurrency locks per (package, python-version) to serialize same-package runs and prevent credential conflicts
 
-**Credentials**: Receives 30+ environment variables covering OpenAI, Anthropic, Google, AWS, Azure, Groq, MistralAI, HuggingFace, and more.
+**Credentials**: Receives 40+ environment variables covering OpenAI, Anthropic, Google, AWS, Azure, Groq, MistralAI, HuggingFace, Cohere, Anthropic Files API, and more.
 
 ## Auto-Labeling Workflows
 
